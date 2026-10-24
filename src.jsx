@@ -32,7 +32,7 @@ function AppIcon({ app, large = false }) {
     {domain && !failed ? <img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`} alt="" loading="lazy" onError={() => setFailed(true)} /> : <span>{app.emoji}</span>}
   </div>;
 }
-const categories = ["Все", "Проверить доступность", ...new Set(apps.map(a => a.category))];
+const categories = ["Все", "Нет в App Store", ...new Set(apps.map(a => a.category))];
 const needsCheck = (app) => app.status !== "App Store" && !app.status.startsWith("App Store ·");
 const detailsStyle = { background: "#151c30", border: "1px solid #303b5b", borderRadius: 18, padding: 18, marginBottom: 14 };
 const actionStyle = { display: "inline-block", padding: "12px 16px", borderRadius: 12, background: "#aaa8ff", color: "#101326", fontWeight: 700, textDecoration: "none", border: 0, cursor: "pointer", marginRight: 8, marginTop: 8 };
@@ -48,9 +48,10 @@ function App() {
   const activeApp = apps.find(a => a.id === activeId);
   const showApp = (id) => { setActiveId(id); setPage("details"); window.scrollTo(0, 0); };
   const goCatalog = () => { setPage("catalog"); window.scrollTo(0, 0); };
+  const goLimited = () => { setCategory("Нет в App Store"); setQuery(""); setPage("catalog"); window.scrollTo({top:0,behavior:"smooth"}); };
   const [notice, setNotice] = useState("");
   const filtered = useMemo(() => apps.filter(a =>
-    (category === "Все" || (category === "Проверить доступность" ? needsCheck(a) : a.category === category)) &&
+    (category === "Все" || (category === "Нет в App Store" ? needsCheck(a) : a.category === category)) &&
     (a.name + " " + a.description + " " + a.category).toLowerCase().includes(query.toLowerCase())
   ), [query, category]);
   const add = (id) => { setCart(old => old.includes(id) ? old : [...old, id]); setNotice("Добавлено в корзину"); setTimeout(() => setNotice(""), 1800); };
@@ -71,12 +72,13 @@ function App() {
           <p>Находи приложения для iPhone, включая те, которые сложно найти в российском App Store. Способы получения проверяй в официальных источниках.</p>
         </section>
         <label className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Поиск приложений..." /></label>
-        <div className="lux-feature" role="button" tabIndex={0} onClick={() => setCategory("Проверить доступность")} onKeyDown={e => {if(e.key === "Enter") setCategory("Проверить доступность");}}>
-          <div className="lux-feature-mark">✦</div><div><b>Сложно найти в App Store?</b><small>Банковские приложения и официальные способы доступа</small></div><span>→</span>
+        <div className="lux-feature" role="button" tabIndex={0} onClick={goLimited} onKeyDown={e => {if(e.key === "Enter") goLimited();}}>
+          <div className="lux-feature-mark">✦</div><div><b>Нет в App Store?</b><small>Приложения с ограниченной доступностью и проверка официальных способов</small></div><span>→</span>
         </div>
         <div className="section-head"><h2>Категории</h2><span>{filtered.length} прилож.</span></div>
         <div className="categories">{categories.map(c => <button key={c} className={category === c ? "category active" : "category"} onClick={() => setCategory(c)}>{c}</button>)}</div>
-        <div className="section-head"><h2>Каталог</h2><span>Официальные источники</span></div>
+        {category === "Нет в App Store" && <div className="lux-access-note"><b>Нет в App Store — проверяем доступность</b><p>В этом разделе собраны приложения, для которых доступность в российском App Store или способ установки на iPhone требуют проверки. Это не означает, что каждое из них удалено во всех регионах. Ссылки ведут на сайты правообладателей; установка не гарантируется.</p><button onClick={() => setCategory("Все")}>← Показать весь каталог</button></div>}
+        <div className="section-head"><h2>{category === "Нет в App Store" ? "Особый доступ" : "Каталог"}</h2><span>Официальные источники</span></div>
         <div className="cards">{filtered.map(a => <article className="app-card" key={a.id}>
           <AppIcon app={a} />
           <div className="app-info"><h3>{a.name}</h3><div className="app-category">{a.category}</div><p>{a.description}</p><p className="app-status">{needsCheck(a) ? "● Требует проверки доступности" : "● " + a.status}</p>
@@ -164,6 +166,10 @@ main { padding-bottom: 32px !important; }
 .lux-feature > span { margin-left:auto; color:#b4b3ff; font-size:24px; }
 .app-card { position:relative; }
 .app-status { color:#c0baff; }
+.lux-access-note { border:1px solid #494477; background:linear-gradient(125deg,#242440,#171d30); border-radius:20px; padding:18px; margin:12px 0 24px; }
+.lux-access-note b { color:#f4f0ff; font-size:17px; }
+.lux-access-note p { color:#c2c6d9; font-size:14px; line-height:1.6; }
+.lux-access-note button { background:#a9a8ff; border:0; color:#17172b; padding:11px 15px; border-radius:11px; font-weight:700; cursor:pointer; }
 @media (max-width: 420px) { .lux-icon { width:60px; height:60px; flex-basis:60px; } .lux-icon img { width:44px; height:44px; } .lux-icon-large { width:90px; height:90px; } }
 `;
 const luxStyle = document.createElement("style"); luxStyle.textContent = luxCSS; document.head.appendChild(luxStyle);
