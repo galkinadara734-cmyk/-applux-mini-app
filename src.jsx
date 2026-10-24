@@ -133,9 +133,25 @@ function App() {
   </div>;
 }
 const luxCSS = `
-.app-shell { padding-bottom: 125px !important; }
-main { padding-bottom: 45px !important; }
-.bottom-nav { z-index: 30; }
+/* Нижняя панель не закрывает последние карточки и кнопки на iPhone. */
+.app-shell { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important; }
+main { padding-bottom: 32px !important; }
+.bottom-nav {
+  position: fixed !important;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(480px, calc(100% - 28px)) !important;
+  margin: 0 !important;
+  z-index: 30;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+}
+.toast { bottom: calc(102px + env(safe-area-inset-bottom, 0px)) !important; z-index: 35; }
+@media (max-width: 420px) {
+  .app-card { align-items: flex-start; }
+  .actions { gap: 7px; }
+  .source-btn, .add-btn { max-width: 100%; white-space: normal; text-align: center; }
+}
 .lux-icon { width: 70px; height: 70px; border-radius: 19px; flex: 0 0 70px; background: linear-gradient(140deg,#293653,#151b2f); display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(167,178,255,.12); }
 .lux-icon img { width: 51px; height: 51px; object-fit: contain; border-radius: 12px; }
 .lux-icon span { font-size: 32px; }
