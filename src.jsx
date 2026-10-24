@@ -18,16 +18,25 @@ const apps = [
   { id: 13, name: "Canva", category: "Творчество", emoji: "🎨", description: "Создание дизайнов и презентаций.", source: "https://apps.apple.com/app/canva-design-photo-video/id897446215", status: "App Store" },
   { id: 14, name: "Duolingo", category: "Обучение", emoji: "🦉", description: "Уроки иностранных языков.", source: "https://apps.apple.com/app/duolingo-language-lessons/id570060128", status: "App Store" }
 ];
-const categories = ["Все", ...new Set(apps.map(a => a.category))];
+const categories = ["Все", "Особый доступ", ...new Set(apps.map(a => a.category))];
+const needsCheck = (app) => app.status !== "App Store" && !app.status.startsWith("App Store ·");
+const detailsStyle = { background: "#151c30", border: "1px solid #303b5b", borderRadius: 18, padding: 18, marginBottom: 14 };
+const actionStyle = { display: "inline-block", padding: "12px 16px", borderRadius: 12, background: "#aaa8ff", color: "#101326", fontWeight: 700, textDecoration: "none", border: 0, cursor: "pointer", marginRight: 8, marginTop: 8 };
+const secondaryStyle = { ...actionStyle, background: "#29334e", color: "#fff" };
+
 
 function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Все");
   const [cart, setCart] = useState([]);
   const [page, setPage] = useState("catalog");
+  const [activeId, setActiveId] = useState(null);
+  const activeApp = apps.find(a => a.id === activeId);
+  const showApp = (id) => { setActiveId(id); setPage("details"); window.scrollTo(0, 0); };
+  const goCatalog = () => { setPage("catalog"); window.scrollTo(0, 0); };
   const [notice, setNotice] = useState("");
   const filtered = useMemo(() => apps.filter(a =>
-    (category === "Все" || a.category === category) &&
+    (category === "Все" || (category === "Особый доступ" ? needsCheck(a) : a.category === category)) &&
     (a.name + " " + a.description + " " + a.category).toLowerCase().includes(query.toLowerCase())
   ), [query, category]);
   const add = (id) => { setCart(old => old.includes(id) ? old : [...old, id]); setNotice("Добавлено в корзину"); setTimeout(() => setNotice(""), 1800); };
@@ -54,12 +63,42 @@ function App() {
         <div className="cards">{filtered.map(a => <article className="app-card" key={a.id}>
           <div className="app-emoji">{a.emoji}</div>
           <div className="app-info"><h3>{a.name}</h3><div className="app-category">{a.category}</div><p>{a.description}</p><p className="app-status">Статус: {a.status}</p>
-            <div className="actions"><a className="source-btn" href={a.source} target="_blank" rel="noreferrer">{a.status === "App Store" ? "App Store ↗" : "Официальный источник ↗"}</a><button className={cart.includes(a.id) ? "add-btn added" : "add-btn"} onClick={() => cart.includes(a.id) ? remove(a.id) : add(a.id)}>{cart.includes(a.id) ? "✓ В корзине" : "+ В корзину"}</button></div>
+            <div className="actions"><button className="source-btn" onClick={() => showApp(a.id)}>Подробнее →</button><a className="source-btn" href={a.source} target="_blank" rel="noreferrer">{a.status === "App Store" ? "App Store ↗" : "Официальный источник ↗"}</a><button className={cart.includes(a.id) ? "add-btn added" : "add-btn"} onClick={() => cart.includes(a.id) ? remove(a.id) : add(a.id)}>{cart.includes(a.id) ? "✓ В корзине" : "+ В корзину"}</button></div>
           </div>
         </article>)}
         {filtered.length === 0 && <div className="empty">Ничего не найдено. Попробуй другой запрос.</div>}</div>
-      </> : <section className="cart-page">
-        <button className="back" onClick={() => setPage("catalog")}>← Назад в каталог</button>
+      </> : page === "details" && activeApp ? <section className="cart-page">
+        <button className="back" onClick={goCatalog}>← Назад в каталог</button>
+        <div style={detailsStyle}>
+          <div style={{ fontSize: 48, marginBottom: 10 }}>{activeApp.emoji}</div>
+          <h1 style={{ marginBottom: 8 }}>{activeApp.name}</h1>
+          <p className="muted">{activeApp.category} · iPhone</p>
+          <p>{activeApp.description}</p>
+          <p className="app-status">{needsCheck(activeApp) ? "Доступность и способ установки требуют проверки" : activeApp.status}</p>
+        </div>
+        <div style={detailsStyle}>
+          <h2>Как получить приложение</h2>
+          {needsCheck(activeApp) ? <>
+            <p>1. Открой официальный сайт разработчика или банка.</p>
+            <p>2. Найди актуальную инструкцию для iPhone и проверь совместимость с твоей версией iOS.</p>
+            <p>3. Используй только подтверждённый правообладателем способ. Если приложения нет в App Store, возможность установки не гарантируется.</p>
+          </> : <>
+            <p>1. Перейди по ссылке App Store.</p>
+            <p>2. Проверь доступность в своём регионе и совместимость с iPhone.</p>
+            <p>3. Установи приложение обычным способом, если оно доступно.</p>
+          </>}
+          <a style={actionStyle} href={activeApp.source} target="_blank" rel="noopener noreferrer">Официальный источник ↗</a>
+        </div>
+        <div style={detailsStyle}>
+          <h2>Нужна помощь?</h2>
+          <p>Открой наш Telegram-бот и напиши название приложения. Пока обращения обрабатываются вручную — автоматическая заявка ещё не подключена.</p>
+          <a style={actionStyle} href="https://t.me/Applux63_bot" target="_blank" rel="noopener noreferrer">Открыть бот Applux ↗</a>
+          <button style={secondaryStyle} onClick={() => { if (navigator.clipboard?.writeText) { navigator.clipboard.writeText("Здравствуйте! Нужна помощь с приложением: " + activeApp.name).then(() => setNotice("Текст обращения скопирован")).catch(() => setNotice("Напишите название приложения в боте")); } else { setNotice("Напишите название приложения в боте"); } }}>Скопировать текст заявки</button>
+          <p className="fineprint">Не передавай пароли Apple ID, банковские пароли и коды подтверждения. Не устанавливай непроверенные профили и сертификаты.</p>
+        </div>
+        {notice && <div className="toast">{notice}</div>}
+      </section> : <section className="cart-page">
+        <button className="back" onClick={goCatalog}>← Назад в каталог</button>
         <h1>Корзина</h1><p className="muted">Список выбранных приложений и полезных ссылок.</p>
         {selected.length ? selected.map(a => <div className="cart-row" key={a.id}><span className="cart-emoji">{a.emoji}</span><div className="cart-name"><b>{a.name}</b><small>{a.category} · Бесплатный каталог</small></div><button className="remove" onClick={() => remove(a.id)}>Убрать</button></div>) : <div className="empty">Корзина пока пуста. Добавь приложения из каталога.</div>}
         {selected.length > 0 && <button className="primary wide" onClick={() => {setNotice("Это демонстрационный каталог. Оплата и оформление заказов пока не подключены.");}}>Продолжить</button>}
@@ -68,9 +107,9 @@ function App() {
       </section>}
     </main>
     <nav className="bottom-nav">
-      <button className={page === "catalog" ? "nav-item selected" : "nav-item"} onClick={() => setPage("catalog")}><span>⌂</span>Каталог</button>
+      <button className={page === "catalog" ? "nav-item selected" : "nav-item"} onClick={goCatalog}><span>⌂</span>Каталог</button>
       <button className={page === "cart" ? "nav-item selected" : "nav-item"} onClick={() => setPage("cart")}><span>🛒</span>Корзина {cart.length ? `(${cart.length})` : ""}</button>
-      <button className="nav-item" onClick={() => setNotice("Поддержка будет подключена на следующем этапе.")}><span>ⓘ</span>Помощь</button>
+      <button className="nav-item" onClick={() => window.open("https://t.me/Applux63_bot", "_blank", "noopener,noreferrer")}><span>ⓘ</span>Помощь</button>
     </nav>
     {notice && page === "catalog" && <div className="toast">{notice}</div>}
     <footer>Applux · Демоверсия · Проверяйте актуальность способов получения у правообладателей</footer>
