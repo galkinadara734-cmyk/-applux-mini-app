@@ -18,7 +18,21 @@ const apps = [
   { id: 13, name: "Canva", category: "Творчество", emoji: "🎨", description: "Создание дизайнов и презентаций.", source: "https://apps.apple.com/app/canva-design-photo-video/id897446215", status: "App Store" },
   { id: 14, name: "Duolingo", category: "Обучение", emoji: "🦉", description: "Уроки иностранных языков.", source: "https://apps.apple.com/app/duolingo-language-lessons/id570060128", status: "App Store" }
 ];
-const categories = ["Все", "Особый доступ", ...new Set(apps.map(a => a.category))];
+// Иконки сайтов правообладателей; это не всегда иконки iOS-приложений.
+const domains = {
+  1: "sberbank.ru", 2: "tbank.ru", 3: "vtb.ru", 4: "alfabank.ru",
+  5: "gazprombank.ru", 6: "psbank.ru", 7: "rshb.ru", 8: "sovcombank.ru",
+  9: "telegram.org", 10: "whatsapp.com", 11: "google.com", 12: "spotify.com",
+  13: "canva.com", 14: "duolingo.com"
+};
+function AppIcon({ app, large = false }) {
+  const [failed, setFailed] = React.useState(false);
+  const domain = domains[app.id];
+  return <div className={large ? "lux-icon lux-icon-large" : "lux-icon"}>
+    {domain && !failed ? <img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`} alt="" loading="lazy" onError={() => setFailed(true)} /> : <span>{app.emoji}</span>}
+  </div>;
+}
+const categories = ["Все", "Проверить доступность", ...new Set(apps.map(a => a.category))];
 const needsCheck = (app) => app.status !== "App Store" && !app.status.startsWith("App Store ·");
 const detailsStyle = { background: "#151c30", border: "1px solid #303b5b", borderRadius: 18, padding: 18, marginBottom: 14 };
 const actionStyle = { display: "inline-block", padding: "12px 16px", borderRadius: 12, background: "#aaa8ff", color: "#101326", fontWeight: 700, textDecoration: "none", border: 0, cursor: "pointer", marginRight: 8, marginTop: 8 };
@@ -36,7 +50,7 @@ function App() {
   const goCatalog = () => { setPage("catalog"); window.scrollTo(0, 0); };
   const [notice, setNotice] = useState("");
   const filtered = useMemo(() => apps.filter(a =>
-    (category === "Все" || (category === "Особый доступ" ? needsCheck(a) : a.category === category)) &&
+    (category === "Все" || (category === "Проверить доступность" ? needsCheck(a) : a.category === category)) &&
     (a.name + " " + a.description + " " + a.category).toLowerCase().includes(query.toLowerCase())
   ), [query, category]);
   const add = (id) => { setCart(old => old.includes(id) ? old : [...old, id]); setNotice("Добавлено в корзину"); setTimeout(() => setNotice(""), 1800); };
@@ -53,16 +67,19 @@ function App() {
       {page === "catalog" ? <>
         <section className="hero">
           <div className="eyebrow">ТВОЙ КАТАЛОГ</div>
-          <h1>Нужное приложение.<br/><span>В одном месте.</span></h1>
+          <h1>Приложения для iPhone.<br/><span>В одном месте.</span></h1>
           <p>Находи приложения для iPhone, включая те, которые сложно найти в российском App Store. Способы получения проверяй в официальных источниках.</p>
         </section>
         <label className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Поиск приложений..." /></label>
+        <div className="lux-feature" role="button" tabIndex={0} onClick={() => setCategory("Проверить доступность")} onKeyDown={e => {if(e.key === "Enter") setCategory("Проверить доступность");}}>
+          <div className="lux-feature-mark">✦</div><div><b>Сложно найти в App Store?</b><small>Банковские приложения и официальные способы доступа</small></div><span>→</span>
+        </div>
         <div className="section-head"><h2>Категории</h2><span>{filtered.length} прилож.</span></div>
         <div className="categories">{categories.map(c => <button key={c} className={category === c ? "category active" : "category"} onClick={() => setCategory(c)}>{c}</button>)}</div>
-        <div className="section-head"><h2>Каталог</h2><span>Информация и ссылки</span></div>
+        <div className="section-head"><h2>Каталог</h2><span>Официальные источники</span></div>
         <div className="cards">{filtered.map(a => <article className="app-card" key={a.id}>
-          <div className="app-emoji">{a.emoji}</div>
-          <div className="app-info"><h3>{a.name}</h3><div className="app-category">{a.category}</div><p>{a.description}</p><p className="app-status">Статус: {a.status}</p>
+          <AppIcon app={a} />
+          <div className="app-info"><h3>{a.name}</h3><div className="app-category">{a.category}</div><p>{a.description}</p><p className="app-status">{needsCheck(a) ? "● Требует проверки доступности" : "● " + a.status}</p>
             <div className="actions"><button className="source-btn" onClick={() => showApp(a.id)}>Подробнее →</button><a className="source-btn" href={a.source} target="_blank" rel="noreferrer">{a.status === "App Store" ? "App Store ↗" : "Официальный источник ↗"}</a><button className={cart.includes(a.id) ? "add-btn added" : "add-btn"} onClick={() => cart.includes(a.id) ? remove(a.id) : add(a.id)}>{cart.includes(a.id) ? "✓ В корзине" : "+ В корзину"}</button></div>
           </div>
         </article>)}
@@ -70,7 +87,7 @@ function App() {
       </> : page === "details" && activeApp ? <section className="cart-page">
         <button className="back" onClick={goCatalog}>← Назад в каталог</button>
         <div style={detailsStyle}>
-          <div style={{ fontSize: 48, marginBottom: 10 }}>{activeApp.emoji}</div>
+          <AppIcon app={activeApp} large />
           <h1 style={{ marginBottom: 8 }}>{activeApp.name}</h1>
           <p className="muted">{activeApp.category} · iPhone</p>
           <p>{activeApp.description}</p>
@@ -100,7 +117,7 @@ function App() {
       </section> : <section className="cart-page">
         <button className="back" onClick={goCatalog}>← Назад в каталог</button>
         <h1>Корзина</h1><p className="muted">Список выбранных приложений и полезных ссылок.</p>
-        {selected.length ? selected.map(a => <div className="cart-row" key={a.id}><span className="cart-emoji">{a.emoji}</span><div className="cart-name"><b>{a.name}</b><small>{a.category} · Бесплатный каталог</small></div><button className="remove" onClick={() => remove(a.id)}>Убрать</button></div>) : <div className="empty">Корзина пока пуста. Добавь приложения из каталога.</div>}
+        {selected.length ? selected.map(a => <div className="cart-row" key={a.id}><AppIcon app={a} /><div className="cart-name"><b>{a.name}</b><small>{a.category} · Бесплатный каталог</small></div><button className="remove" onClick={() => remove(a.id)}>Убрать</button></div>) : <div className="empty">Корзина пока пуста. Добавь приложения из каталога.</div>}
         {selected.length > 0 && <button className="primary wide" onClick={() => {setNotice("Это демонстрационный каталог. Оплата и оформление заказов пока не подключены.");}}>Продолжить</button>}
         <p className="fineprint">На этом этапе корзина сохраняется только во время открытой сессии. Оплата и отправка заказов пока не подключены.</p>
         {notice && <div className="toast">{notice}</div>}
@@ -115,4 +132,23 @@ function App() {
     <footer>Applux · Демоверсия · Проверяйте актуальность способов получения у правообладателей</footer>
   </div>;
 }
+const luxCSS = `
+.app-shell { padding-bottom: 125px !important; }
+main { padding-bottom: 45px !important; }
+.bottom-nav { z-index: 30; }
+.lux-icon { width: 70px; height: 70px; border-radius: 19px; flex: 0 0 70px; background: linear-gradient(140deg,#293653,#151b2f); display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(167,178,255,.12); }
+.lux-icon img { width: 51px; height: 51px; object-fit: contain; border-radius: 12px; }
+.lux-icon span { font-size: 32px; }
+.lux-icon-large { width: 90px; height:90px; margin-bottom: 15px; border-radius: 24px; }
+.lux-icon-large img { width: 66px; height:66px; }
+.lux-feature { display:flex; align-items:center; gap: 14px; padding: 17px; border-radius: 19px; background: linear-gradient(110deg,#29244c,#171e37); border:1px solid #4c467b; margin: 18px 0 26px; cursor:pointer; }
+.lux-feature-mark { display:grid; place-items:center; width:48px; height:48px; border-radius:14px; background:#a9a8ff; color:#14172a; font-size:28px; flex-shrink:0; }
+.lux-feature b { display:block; font-size:15px; color:#f6f6ff; }
+.lux-feature small { display:block; color:#b8bed5; margin-top:4px; line-height:1.4; }
+.lux-feature > span { margin-left:auto; color:#b4b3ff; font-size:24px; }
+.app-card { position:relative; }
+.app-status { color:#c0baff; }
+@media (max-width: 420px) { .lux-icon { width:60px; height:60px; flex-basis:60px; } .lux-icon img { width:44px; height:44px; } .lux-icon-large { width:90px; height:90px; } }
+`;
+const luxStyle = document.createElement("style"); luxStyle.textContent = luxCSS; document.head.appendChild(luxStyle);
 createRoot(document.getElementById("root")).render(<App />);
