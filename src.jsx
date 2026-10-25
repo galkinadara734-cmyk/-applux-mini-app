@@ -87,11 +87,19 @@ const allApps = useMemo(() => {
   const goCatalog = () => { setPage("catalog"); window.scrollTo(0, 0); };
   const goLimited = () => { setCategory("Нет в App Store"); setQuery(""); setPage("catalog"); window.scrollTo({top:0,behavior:"smooth"}); };
   const [notice, setNotice] = useState("");
-  const filtered = useMemo(() => allApps.filter(a =>
-  const add = (id) => { setCart(old => old.includes(id) ? old : [...old, id]); setNotice("Добавлено в корзину"); setTimeout(() => setNotice(""), 1800); };
-  const remove = (id) => setCart(old => old.filter(x => x !== id));
-  const selected = apps.filter(a => cart.includes(a.id));
+  
+const filtered = useMemo(() => allApps.filter(a =>
+  (category === "Все" ||
+    (category === "Нет в App Store"
+      ? needsCheck(a)
+      : a.category === category)) &&
+  (a.name + " " + (a.description || "") + " " + (a.category || ""))
+    .toLowerCase()
+    .includes(query.toLowerCase())
+), [allApps, query, category]);
 
+  const remove = (id) => setCart(old => old.filter(x => x !== id));
+  const selected = allApps.filter(a => cart.includes(a.id));
   return <div className="app-shell">
     <header className="top">
       <div className="brand-icon">A</div>
