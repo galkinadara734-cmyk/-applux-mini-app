@@ -12,7 +12,8 @@
     "vite": "latest",
     "typescript": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "@neondatabase/serverless": "^1.0.0"
   },
   "devDependencies": {}
 }
