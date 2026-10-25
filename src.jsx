@@ -63,15 +63,31 @@ useEffect(() => {
   const [cart, setCart] = useState([]);
   const [page, setPage] = useState("catalog");
   const [activeId, setActiveId] = useState(null);
-  const activeApp = apps.find(a => a.id === activeId);
+  
+const allApps = useMemo(() => {
+  const names = new Set(apps.map(a => a.name.toLowerCase()));
+
+  const newApps = dbApps
+    .filter(a => !names.has(a.name.toLowerCase()))
+    .map(a => ({
+      ...a,
+      id: `db-${a.id}`,
+      emoji: "📱",
+      source: a.app_store_url || "#",
+      status: a.app_store_url
+        ? "App Store"
+        : "Проверить способ установки"
+    }));
+
+  return [...apps, ...newApps];
+}, [dbApps]);
+
+  const activeApp = allApps.find(a => a.id === activeId);
   const showApp = (id) => { setActiveId(id); setPage("details"); window.scrollTo(0, 0); };
   const goCatalog = () => { setPage("catalog"); window.scrollTo(0, 0); };
   const goLimited = () => { setCategory("Нет в App Store"); setQuery(""); setPage("catalog"); window.scrollTo({top:0,behavior:"smooth"}); };
   const [notice, setNotice] = useState("");
-  const filtered = useMemo(() => apps.filter(a =>
-    (category === "Все" || (category === "Нет в App Store" ? needsCheck(a) : a.category === category)) &&
-    (a.name + " " + a.description + " " + a.category).toLowerCase().includes(query.toLowerCase())
-  ), [query, category]);
+  const filtered = useMemo(() => allApps.filter(a =>
   const add = (id) => { setCart(old => old.includes(id) ? old : [...old, id]); setNotice("Добавлено в корзину"); setTimeout(() => setNotice(""), 1800); };
   const remove = (id) => setCart(old => old.filter(x => x !== id));
   const selected = apps.filter(a => cart.includes(a.id));
