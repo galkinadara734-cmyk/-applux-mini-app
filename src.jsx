@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
 
@@ -39,7 +39,25 @@ const actionStyle = { display: "inline-block", padding: "12px 16px", borderRadiu
 const secondaryStyle = { ...actionStyle, background: "#29334e", color: "#fff" };
 
 
-function App() {
+function App() {const [dbApps, setDbApps] = useState([]);
+
+useEffect(() => {
+  fetch("/api/apps")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Ошибка загрузки каталога");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setDbApps(data);
+      }
+    })
+    .catch((error) => {
+      console.error("Neon:", error);
+    });
+}, []);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Все");
   const [cart, setCart] = useState([]);
