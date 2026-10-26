@@ -1,5 +1,10 @@
 
-import { timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual
+} from "node:crypto";
 
 export default function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -26,20 +31,42 @@ export default function handler(req, res) {
     });
   }
 
-  const a = Buffer.from(password);
-  const b = Buffer.from(savedPassword);
+  const entered = createHash("sha256")
+    .update(password)
+    .digest();
 
-  const valid =
-    a.length === b.length &&
-    timingSafeEqual(a, b);
+  const expected = createHash("sha256")
+    .update(savedPassword)
+    .digest();
 
-  if (!valid) {
+  if (!timingSafeEqual(entered, expected)) {
     return res.status(401).json({
       error: "Неверный пароль"
     });
   }
 
+  const expires = Date.now() + 60 * 60 * 1000;
+  const nonce = randomBytes(16).toString("hex");
+  const payload = `${expires}.${nonce}`;
+
+  const signature = createHmac(
+    "sha256",
+    createHash("sha256")
+      .update("applux-session:" + savedPassword)
+      .digest()
+  )
+    .update(payload)
+    .digest("hex");
+
+  const token = `${payload}.${signature}`;
+
+  res.setHeader(
+    "Set-Cookie",
+    `applux_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/api; Max-Age=3600`
+  );
+
   return res.status(200).json({
     success: true
   });
 }
+
