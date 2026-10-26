@@ -1,28 +1,131 @@
 
-import React from "react";
+import React, { useState } from "react";
 
 export default function Admin() {
+  const [password, setPassword] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function login(event) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Ошибка входа");
+      }
+
+      setLoggedIn(true);
+      setPassword("");
+    } catch (err) {
+      setError(err.message || "Не удалось войти");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const inputStyle = {
+    width: "100%",
+    padding: "14px",
+    borderRadius: "12px",
+    border: "1px solid #455071",
+    background: "#101525",
+    color: "white",
+    fontSize: "16px",
+    boxSizing: "border-box"
+  };
+
+  const buttonStyle = {
+    width: "100%",
+    padding: "15px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#aaa8ff",
+    color: "#101525",
+    fontWeight: "bold",
+    fontSize: "16px",
+    marginTop: "16px"
+  };
+
   return (
     <main style={{
       minHeight: "100vh",
       background: "#101525",
-      color: "#ffffff",
+      color: "white",
       padding: "24px",
-      fontFamily: "Arial, sans-serif"
+      fontFamily: "Arial, sans-serif",
+      boxSizing: "border-box"
     }}>
       <h1>💜 Applux Admin</h1>
       <p>Панель управления каталогом приложений</p>
 
       <section style={{
         background: "#1c2540",
-        padding: "20px",
-        borderRadius: "16px",
+        padding: "22px",
+        borderRadius: "18px",
         marginTop: "24px"
       }}>
-        <h2>Управление приложениями</h2>
-        <p>Здесь появятся добавление, редактирование и удаление приложений.</p>
-        <p>Подключение к Neon и защищённый вход — следующий этап.</p>
+        {!loggedIn ? (
+          <>
+            <h2>🔐 Вход администратора</h2>
+            <p>Введите пароль для проверки доступа.</p>
+
+            <form onSubmit={login}>
+              <input
+                type="password"
+                placeholder="Пароль администратора"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                style={inputStyle}
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={buttonStyle}
+              >
+                {loading ? "Проверяем..." : "Войти"}
+              </button>
+            </form>
+
+            {error && (
+              <p role="alert" style={{ color: "#ffb4b4" }}>
+                {error}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <h2>✅ Пароль подтверждён</h2>
+            <p>Проверка пароля прошла успешно.</p>
+            <p>
+              Управление базой Neon подключим
+              после настройки защищённой сессии.
+            </p>
+            <button
+              onClick={() => setLoggedIn(false)}
+              style={buttonStyle}
+            >
+              Выйти
+            </button>
+          </>
+        )}
       </section>
     </main>
   );
 }
+
