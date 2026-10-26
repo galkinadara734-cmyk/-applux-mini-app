@@ -116,12 +116,30 @@ export default function Admin() {
               Управление базой Neon подключим
               после настройки защищённой сессии.
             </p>
-            <button
-              onClick={() => setLoggedIn(false)}
-              style={buttonStyle}
-            >
-              Выйти
-            </button>
+            
+<button
+  onClick={async () => {
+    try {
+      const response = await fetch("/api/admin-logout", {
+        method: "POST",
+        credentials: "same-origin"
+      });
+
+      if (!response.ok) {
+        throw new Error("Ошибка выхода");
+      }
+
+      setLoggedIn(false);
+      setPassword("");
+      setError("");
+    } catch (err) {
+      setError("Не удалось завершить сеанс. Попробуй ещё раз.");
+    }
+  }}
+  style={buttonStyle}
+>
+  Выйти
+</button>
           </>
         )}
       </section>
