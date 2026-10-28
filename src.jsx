@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
-
+import Admin from "./admin.jsx";
 const apps = [
   { id: 1, name: "СберБанк", category: "Банки", emoji: "🟢", description: "Банковские сервисы. Наличие приложения для iPhone и официальный способ получения необходимо уточнить у банка.", source: "https://www.sberbank.ru/", status: "Проверить способ установки" },
   { id: 2, name: "Т-Банк", category: "Банки", emoji: "💛", description: "Банковские услуги и управление счетами. Уточни актуальный вариант для iPhone на официальном сайте.", source: "https://www.tbank.ru/", status: "Проверить способ установки" },
