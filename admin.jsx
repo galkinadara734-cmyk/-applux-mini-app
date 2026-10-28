@@ -161,9 +161,50 @@ export default function Admin() {
             <h2>✅ Пароль подтверждён</h2>
             <p>Проверка пароля прошла успешно.</p>
             <p>
-              Управление базой Neon подключим
-              после настройки защищённой сессии.
-            </p>
+              
+<div>
+  <h3>📱 Каталог приложений Applux</h3>
+
+  {appsLoading && <p>Загружаем приложения...</p>}
+
+  {appsError && (
+    <p style={{ color: "#ff9999" }}>
+      Ошибка: {appsError}
+    </p>
+  )}
+
+  {!appsLoading && !appsError && (
+    <>
+      <p>Всего приложений: {apps.length}</p>
+
+      {apps.length === 0 && (
+        <p>В каталоге пока нет приложений.</p>
+      )}
+
+      {apps.map((app) => (
+        <div
+          key={app.id}
+          style={{
+            padding: "14px",
+            marginBottom: "12px",
+            background: "#121629",
+            borderRadius: "12px"
+          }}
+        >
+          <strong>{app.name}</strong>
+          <p>Категория: {app.category}</p>
+          <p>{app.description}</p>
+          <p>
+            Статус: {app.is_available
+              ? "Опубликовано"
+              : "Скрыто"}
+          </p>
+        </div>
+      ))}
+    </>
+  )}
+</div>
+
             
 <button
   onClick={async () => {
