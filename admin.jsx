@@ -1,11 +1,59 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function Admin() {
   const [password, setPassword] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [apps, setApps] = useState([]);
+  const [appsLoading, setAppsLoading] = useState(false);
+  const [appsError, setAppsError] = useState("");
+
+  useEffect(() => {
+    if (!loggedIn) return;
+
+    let cancelled = false;
+
+    async function loadApps() {
+      setAppsLoading(true);
+      setAppsError("");
+
+      try {
+        const response = await fetch("/api/admin-apps", {
+          credentials: "same-origin",
+          cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Ошибка загрузки каталога"
+          );
+        }
+
+        if (!cancelled) {
+          setApps(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAppsError(err.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setAppsLoading(false);
+        }
+      }
+    }
+
+    loadApps();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loggedIn]);
 
   async function login(event) {
     event.preventDefault();
