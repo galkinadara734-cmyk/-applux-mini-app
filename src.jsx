@@ -215,4 +215,8 @@ main { padding-bottom: 32px !important; }
 @media (max-width: 420px) { .lux-icon { width:60px; height:60px; flex-basis:60px; } .lux-icon img { width:44px; height:44px; } .lux-icon-large { width:90px; height:90px; } }
 `;
 const luxStyle = document.createElement("style"); luxStyle.textContent = luxCSS; document.head.appendChild(luxStyle);
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(
+  window.location.pathname === "/admin"
+    ? <Admin />
+    : <App />
+);
